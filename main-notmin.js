@@ -267,6 +267,7 @@ window.Network = class Network {
       {
         while(true) {
           let id = view.getUint32(offset, true);
+	  offset += 4;
           if(id == 0x00) break;
           let cursor = new Cursor();
           cursor.id = id;
