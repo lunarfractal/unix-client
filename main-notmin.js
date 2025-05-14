@@ -19,7 +19,26 @@ function fadeInUI() {
 function init() {
   canvas = document.getElementById('canvas');
   ctx = canvas.getContext('2d'); // do whatever
+  window.network = new Network();
+  network.connect();
   resizeCanvas();
+}
+
+function getString(view, offset) {
+	var nick = "";
+	for(;;){
+		var v = view.getUint16(offset, true);
+		offset += 2;
+		if(v == 0) {
+			break;
+		}
+
+		nick += String.fromCharCode(v);
+	}
+	return {
+		nick: nick,
+		offset: offset
+	};
 }
 
 var cursors = new Map();
@@ -48,7 +67,43 @@ var OPCODE_DISPATCH = 0x09
 
 var FLAG_CURSOR = 0x00;
 
-class Network {
+window.Cursor = class Cursor {
+  constructor() {
+    this.r = 0;
+    this.g = 0;
+    this.b = 0;
+    this.nick = "";
+    this.x = 0;
+    this.y = 0;
+    this.element = document.createElement('div');
+    this.element.style.height = '15px';
+    this.element.style.padding = '5px';
+    this.element.style.backgroundColor = '#ffffff';
+    this.element.textContent = `
+      hiii
+    `;
+    document.body.appendChild(this.element);
+  }
+
+  updateCursor(x, y) {
+    this.x = x;
+    this.y = y;
+    this.element.style.left = x;
+    this.element.style.top = y;
+  }
+
+  updateNick(nick) {
+    this.nick = nick;
+    this.element.textContent = nick;
+  }
+
+  updateColor(r, g, b) {
+    this.r = r; this.g = g: this.b = b;
+    this.element.style.color = 'rgb('+r+', '+g+', '+b+')';
+  }
+}
+
+window.Network = class Network {
   constructor() {
     this.webSocket = null;
 
@@ -199,17 +254,52 @@ class Network {
     }
   }
 
+  processConfig(view) {
+    let offset = 1;
+    let flags = view.getUint8(offset);
+    offset += 1;
+    switch(flags) {
+      case FLAG_CURSOR:
+      {
+        while(true) {
+          let id = view.getUint32(offset, true);
+          if(id == 0x00) break;
+          let cursor = new Cursor();
+          cursor.id = id;
+          let x = view.getUint16(offset, true);
+          offset += 2;
+          let y = view.getUint16(offset, true);
+          offset += 2;
+          cursor.updateCursor(x, y);
+          let res = getString(view, offset);
+          cursor.updateNick(res.nick);
+          offset = res.offset;
+          let r = view.getUint8(offset++), g = view.getUint8(offset++), b = view.getUint8(offset++);
+          cursor.updateColor(r,g,b);
+          cursors.set(id, cursor);
+        }
+        break;
+      }
+      default:
+        console.log('unknown flags', flags);
+        break;
+    }
+  }
+
   processInfo(view) {
     let offset = 1;
     let flags = view.getUint8(offset);
+    offset += 1;
     switch(flags) {
       case FLAG_CURSOR:
       {
         let id = view.getUint32(offset, true);
         offset += 4;
         if(id == myId) break;
-        let x = view.getUint16(offset+=2, true) / 65535 * window.innerWidth;
-        let y = view.getUint16(offset+=2, true) / 65535 * window.innerHeight;
+        let x = view.getUint16(offset, true) / 65535 * window.innerWidth;
+        offset += 2;
+        let y = view.getUint16(offset, true) / 65535 * window.innerHeight;
+        offset += 2;
         let cursor = cursors.get(id);
         if(cursor) {
           cursor.updateCursor(x, y);
