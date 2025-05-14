@@ -1,0 +1,23 @@
+html {
+  background: #01060c; /* blackish blue */
+}
+
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  font-family: Helvetica, sans-serif;
+}
+
+#canvas {
+  position: fixed;
+  margin: auto;
+}
+
+.app {
+  position: fixed;
+  margin: auto;
+  width: 100%;
+  height: 100%;
+}
