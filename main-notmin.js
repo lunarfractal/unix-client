@@ -208,7 +208,11 @@ window.Network = class Network {
 
     view.setUint8(0, 6);
 
-    shooting ? view.setUint8(1, 1) : view.setUint8(1, 0);
+    let flags = 0x0;
+	  
+    if(shooting) {
+      flags |= 0x1;
+    }
 
     this.webSocket.send(buffer);
   }
