@@ -1,6 +1,8 @@
 var canvas;
 var ctx;
 
+var debug = true;
+
 function resizeCanvas() {
   canvas.width = document.documentElement.clientWidth;
   canvas.height = document.documentElement.clientHeight;
@@ -17,28 +19,35 @@ function fadeInUI() {
 }
 
 function init() {
-  canvas = document.getElementById('canvas');
-  ctx = canvas.getContext('2d'); // do whatever
-  window.network = new Network();
-  network.connect();
+  canvas = document.getElementById("canvas");
+  ctx = canvas.getContext("2d"); // do whatever
+  window.network = new window.Network();
+  window.network.connect();
   resizeCanvas();
+  addListeners();
+}
+
+function addListeners() {
+  document.addEventListener("mousemove", (e) => {
+    window.network.sendCursor(e.clientX, e.clientY);
+  });
 }
 
 function getString(view, offset) {
-	var nick = "";
-	for(;;){
-		var v = view.getUint16(offset, true);
-		offset += 2;
-		if(v == 0) {
-			break;
-		}
+  var nick = "";
+  for (;;) {
+    var v = view.getUint16(offset, true);
+    offset += 2;
+    if (v == 0) {
+      break;
+    }
 
-		nick += String.fromCharCode(v);
-	}
-	return {
-		nick: nick,
-		offset: offset
-	};
+    nick += String.fromCharCode(v);
+  }
+  return {
+    nick: nick,
+    offset: offset,
+  };
 }
 
 var cursors = new Map();
@@ -47,67 +56,63 @@ var myId;
 var myColor;
 var myNick;
 
-var OPCODE_SC_PING = 0x00
-var OPCODE_SC_PONG = 0x01
-var OPCODE_CONFIG = 0xA0
-var OPCODE_ENTERED_ROOM = 0xA1
-var OPCODE_INFO = 0xB0
-var OPCODE_EVENTS = 0xA2
+var OPCODE_SC_PING = 0x00;
+var OPCODE_SC_PONG = 0x01;
+var OPCODE_CONFIG = 0xa0;
+var OPCODE_ENTERED_ROOM = 0xa1;
+var OPCODE_INFO = 0xb0;
+var OPCODE_EVENTS = 0xa2;
 
-var OPCODE_CS_PING = 0x00
-var OPCODE_CS_PONG = 0x01
-var OPCODE_SCREEN = 0x02
-var OPCODE_ENTER_ROOM = 0x03
-var OPCODE_LEAVE_ROOM = 0x04
-var OPCODE_CURSOR = 0x05
-var OPCODE_CLICK = 0x06
-var OPCODE_NICK = 0x07
-var OPCODE_COLOR = 0x08
-var OPCODE_DISPATCH = 0x09
+var OPCODE_CS_PING = 0x00;
+var OPCODE_CS_PONG = 0x01;
+var OPCODE_SCREEN = 0x02;
+var OPCODE_ENTER_ROOM = 0x03;
+var OPCODE_LEAVE_ROOM = 0x04;
+var OPCODE_CURSOR = 0x05;
+var OPCODE_CLICK = 0x06;
+var OPCODE_NICK = 0x07;
+var OPCODE_COLOR = 0x08;
+var OPCODE_DISPATCH = 0x09;
 
 var FLAG_CURSOR = 0x00;
 
+var EVENT_CURSOR_ADD = 0x00;
+var EVENT_CURSOR_DELETE = 0x01;
+
 window.Cursor = class Cursor {
-  constructor() {
-    this.r = 0;
-    this.g = 0;
-    this.b = 0;
-    this.nick = "";
-    this.x = 0;
-    this.y = 0;
-    this.element = document.createElement('div');
-    this.element.style.height = '15px';
-    this.element.style.padding = '5px';
-    this.element.style.backgroundColor = '#ffffff';
-    this.element.textContent = `
-      hiii
-    `;
-    document.body.appendChild(this.element);
+  constructor(maybeShow) {
+    this.element = document.createElement("div");
+    this.element.className = "cursor";
+    this.initElement();
+    if(!maybeShow)
+      document.getElementById("cursor-place").appendChild(this.element);
+  }
+
+  initElement() {
+    let img = document.createElement("img");
+    img.src = "http://brutal.nekoweb.org/cursor.png";
+    this.element.appendChild(img);
+  }
+
+  delete() {
+    document.getElementById("cursor-place").removeChild(this.element);
   }
 
   updateCursor(x, y) {
-    this.x = x;
-    this.y = y;
-    this.element.style.left = x;
-    this.element.style.top = y;
+    this.element.style.marginLeft = x + "px";
+    this.element.style.marginTop = y + "px";
   }
 
-  updateNick(nick) {
-    this.nick = nick;
-    this.element.textContent = nick;
-  }
+  updateNick(nick) {}
 
-  updateColor(r, g, b) {
-    this.r = r; this.g = g: this.b = b;
-    this.element.style.color = 'rgb('+r+', '+g+', '+b+')';
-  }
-}
+  updateColor(r, g, b) {}
+};
 
 window.Network = class Network {
   constructor() {
     this.webSocket = null;
 
-    this.address = "ws://192.168.1.12:8081";
+    this.address = "ws://192.168.1.7:8081";
     this.hasConnection = false;
     this.sentHello = false;
     this.lastPing = 0;
@@ -115,12 +120,12 @@ window.Network = class Network {
 
   connect() {
     try {
-      this.webSocket = new WebSocket('ws://192.168.1.12:8081');
-    } catch(e) {
-      setTimeout(() => this.connect(), 1E3);
+      this.webSocket = new WebSocket("ws://192.168.1.7:8081");
+    } catch (e) {
+      setTimeout(() => this.connect(), 1e3);
       return;
     }
-    this.webSocket.binaryType = 'arraybuffer';
+    this.webSocket.binaryType = "arraybuffer";
     this.webSocket.onopen = this.onSocketOpen;
     this.webSocket.onclose = this.onSocketClose;
     this.webSocket.onerror = this.onError;
@@ -128,13 +133,13 @@ window.Network = class Network {
   }
 
   onSocketOpen() {
-    console.log('Connected!');
+    console.log("Connected!");
     window.network.hello();
   }
 
   onSocketClose() {
-    console.log('disconnected');
-    setTimeout(() => this.connect(), 1E3);
+    console.log("disconnected");
+    setTimeout(() => this.connect(), 1e3);
   }
 
   onError(a) {
@@ -142,6 +147,7 @@ window.Network = class Network {
   }
 
   onSocketMessage(event) {
+    if (debug) console.log(new Uint8Array(event.data));
     window.network.processMessage(event.data);
   }
 
@@ -209,39 +215,42 @@ window.Network = class Network {
     view.setUint8(0, 6);
 
     let flags = 0x0;
-	  
-    if(shooting) {
+
+    if (shooting) {
       flags |= 0x1;
     }
 
     this.webSocket.send(buffer);
   }
-  
+
   sendNick(nick) {
     let buffer = new ArrayBuffer(1 + 2 * nick.length + 3);
     let view = new DataView(buffer);
 
     view.setUint8(0, 3);
 
-    for(let i = 0; i < nick.length; i++) {
+    for (let i = 0; i < nick.length; i++) {
       view.setUint16(1 + i * 2, nick.charCodeAt(i), true);
     }
-    
+
     this.webSocket.send(buffer);
   }
 
-  processMessage(view) {
+  processMessage(buffer) {
+    let view = new DataView(buffer);
     let op = view.getUint8(0);
-    switch(op) {
+    switch (op) {
       case OPCODE_SC_PING:
         this.pong();
         break;
       case OPCODE_SC_PONG:
-        console.log('Pong', +new Date() - this.lastPing);
+        console.log("Pong", +new Date() - this.lastPing);
+        window.network.sendNick("hi");
         break;
       case OPCODE_ENTERED_ROOM:
-        console.log('Did enter room!');
+        console.log("Did enter room!");
         window.myId = view.getUint32(1, true);
+        console.log(myId);
         break;
       case OPCODE_CONFIG:
         this.processConfig(view);
@@ -253,7 +262,7 @@ window.Network = class Network {
         this.processEvents(view);
         break;
       default:
-        console.log('unknown opcode:', op);
+        console.log("unknown opcode:", op);
         break;
     }
   }
@@ -262,14 +271,19 @@ window.Network = class Network {
     let offset = 1;
     let flags = view.getUint8(offset);
     offset += 1;
-    switch(flags) {
-      case FLAG_CURSOR:
-      {
-        while(true) {
+    switch (flags) {
+      case FLAG_CURSOR: {
+        while (true) {
           let id = view.getUint32(offset, true);
-	  offset += 4;
-          if(id == 0x00) break;
-          let cursor = new Cursor();
+          offset += 4;
+          if (id == 0x00) break;
+          let cursor;
+          if (id === myId) {
+            console.log("its my id");
+            cursor = new window.Cursor(true);
+          } else {
+            cursor = new window.Cursor(false);
+          }
           cursor.id = id;
           let x = view.getUint16(offset, true);
           offset += 2;
@@ -279,15 +293,69 @@ window.Network = class Network {
           let res = getString(view, offset);
           cursor.updateNick(res.nick);
           offset = res.offset;
-          let r = view.getUint8(offset++), g = view.getUint8(offset++), b = view.getUint8(offset++);
-          cursor.updateColor(r,g,b);
+          let r = view.getUint8(offset++),
+            g = view.getUint8(offset++),
+            b = view.getUint8(offset++);
+          cursor.updateColor(r, g, b);
           cursors.set(id, cursor);
+          if (debug) console.log("Cursor", cursor);
         }
         break;
       }
       default:
-        console.log('unknown flags', flags);
+        console.log("unknown flags", flags);
         break;
+    }
+  }
+
+  processEvents(view) {
+    let offset = 1;
+    let type = view.getUint8(offset);
+    offset++;
+    if (type == FLAG_CURSOR) {
+      while (true) {
+        let id = view.getUint32(offset, true);
+        offset += 4;
+        if (id == 0x00) break;
+        if(id == myId) continue;
+        let flags = view.getUint8(offset);
+        offset++;
+        switch (flags) {
+          case EVENT_CURSOR_ADD: {
+            let cursor = new window.Cursor();
+            cursor.id = id;
+            let x = (view.getUint16(offset, true) / 65535) * window.innerWidth;
+            offset += 2;
+            let y = (view.getUint16(offset, true) / 65535) * window.innerHeight;
+            offset += 2;
+            let res = getString(view, offset);
+            offset = res.offset;
+            let r = view.getUint8(offset++),
+              g = view.getUint8(offset++),
+              b = view.getUint8(offset++);
+            cursor.updateCursor(x, y);
+            cursor.updateNick(res.nick);
+            cursor.updateColor(r, g, b);
+            cursors.set(id, cursor);
+            if (debug) console.log("Cursor Add", cursor);
+            break;
+          }
+
+          case EVENT_CURSOR_DELETE: {
+            let cursor = cursors.get(id);
+            console.log('Cursor delete', cursor);
+            if (cursor) {
+              cursor.delete();
+              cursors.delete(id);
+            }
+            break;
+          }
+
+          default:
+            console.log("unknown flags", flags);
+            break;
+        }
+      }
     }
   }
 
@@ -295,30 +363,30 @@ window.Network = class Network {
     let offset = 1;
     let flags = view.getUint8(offset);
     offset += 1;
-    switch(flags) {
-      case FLAG_CURSOR:
-      {
+    switch (flags) {
+      case FLAG_CURSOR: {
         let id = view.getUint32(offset, true);
         offset += 4;
-        if(id == myId) break;
-        let x = view.getUint16(offset, true) / 65535 * window.innerWidth;
+        if (id == myId) break;
+        let x = (view.getUint16(offset, true) / 65535) * window.innerWidth;
         offset += 2;
-        let y = view.getUint16(offset, true) / 65535 * window.innerHeight;
+        let y = (view.getUint16(offset, true) / 65535) * window.innerHeight;
         offset += 2;
         let cursor = cursors.get(id);
-        if(cursor) {
+        if (cursor) {
           cursor.updateCursor(x, y);
+          if (debug) console.log(cursor);
         } else {
-          console.log('Cursor with id ' + id + ' not found');
+          console.log("Cursor with id " + id + " not found");
         }
         break;
       }
       default:
-        console.log('unknown flag', flags);
+        console.log("unknown flag", flags);
         break;
     }
   }
-}
+};
 
 window.onload = init;
 window.onresize = resizeCanvas;
