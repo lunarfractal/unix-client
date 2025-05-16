@@ -317,12 +317,16 @@ window.Network = class Network {
         let id = view.getUint32(offset, true);
         offset += 4;
         if (id == 0x00) break;
-        if(id == myId) continue;
         let flags = view.getUint8(offset);
         offset++;
         switch (flags) {
           case EVENT_CURSOR_ADD: {
-            let cursor = new window.Cursor();
+            let cursor;
+            if(id == myId) {
+              cursor = new Cursor(true);
+            } else {
+              cursor = new Cursor(false);
+            }
             cursor.id = id;
             let x = (view.getUint16(offset, true) / 65535) * window.innerWidth;
             offset += 2;
@@ -343,7 +347,7 @@ window.Network = class Network {
 
           case EVENT_CURSOR_DELETE: {
             let cursor = cursors.get(id);
-            console.log('Cursor delete', cursor);
+            if(debug) console.log('Cursor delete', cursor);
             if (cursor) {
               cursor.delete();
               cursors.delete(id);
