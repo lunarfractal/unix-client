@@ -229,7 +229,7 @@ window.Network = class Network {
   }
 
   sendClick(shooting) {
-    let buffer = new ArrayBuffer(1);
+    let buffer = new ArrayBuffer(2);
     let view = new DataView(buffer);
 
     view.setUint8(0, 6);
@@ -239,6 +239,8 @@ window.Network = class Network {
     if (shooting) {
       flags |= 0x1;
     }
+
+    view.setUint8(1, flags);
 
     this.webSocket.send(buffer);
   }
