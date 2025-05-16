@@ -88,6 +88,7 @@ const FLAG_FILE = 0x13;
 const EVENT_CURSOR_ADD = 0x00;
 const EVENT_CURSOR_DELETE = 0x01;
 const EVENT_CHANGE_DIRECTORY = 0x02;
+const EVEMT_ENTER_DIRECTORY = 0x03;
 
 
 window.Cursor = class Cursor {
@@ -105,6 +106,14 @@ window.Cursor = class Cursor {
     this.element.appendChild(img);
   }
 
+  hide() {
+    this.element.style.display = 'none';
+  }
+
+  show() {
+    this.element.style.display = 'block';
+  }
+  
   delete() {
     document.getElementById("cursor-place").removeChild(this.element);
   }
@@ -343,7 +352,8 @@ window.Network = class Network {
         let flags = view.getUint8(offset);
         offset++;
         switch (flags) {
-          case EVENT_CURSOR_ADD: {
+          case EVENT_CURSOR_ADD:
+          {
             let cursor;
             if(id == myId) {
               cursor = new Cursor(true);
@@ -368,12 +378,23 @@ window.Network = class Network {
             break;
           }
 
-          case EVENT_CURSOR_DELETE: {
+          case EVENT_CURSOR_DELETE:
+          {
             let cursor = cursors.get(id);
             if(debug) console.log('Cursor delete', cursor);
             if (cursor) {
               cursor.delete();
               cursors.delete(id);
+            }
+            break;
+          }
+
+          case EVENT_CHANGE_DIRECTORY:
+          {
+            let cursor = cursors.get(id);
+            if(debug) console.log('Cursor hide', cursor);
+            if (cursor) {
+              cursor.hide();
             }
             break;
           }
