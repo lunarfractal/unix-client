@@ -56,28 +56,39 @@ var myId;
 var myColor;
 var myNick;
 
-var OPCODE_SC_PING = 0x00;
-var OPCODE_SC_PONG = 0x01;
-var OPCODE_CONFIG = 0xa0;
-var OPCODE_ENTERED_ROOM = 0xa1;
-var OPCODE_INFO = 0xb0;
-var OPCODE_EVENTS = 0xa2;
+// Client -> Server
+const OPCODE_CS_PING = 0x00;
+const OPCODE_CS_PONG = 0x01;
+const OPCODE_DIMENSIONS = 0x02;
+const OPCODE_ENTER_GAME = 0x03;
+const OPCODE_LEAVE_GAME = 0x04;
+const OPCODE_CURSOR = 0x05;
+const OPCODE_CLICK = 0x06;
+const OPCODE_NICK = 0x07;
+const OPCODE_COLOR = 0x08;
+const OPCODE_DISPATCH = 0x09
 
-var OPCODE_CS_PING = 0x00;
-var OPCODE_CS_PONG = 0x01;
-var OPCODE_SCREEN = 0x02;
-var OPCODE_ENTER_ROOM = 0x03;
-var OPCODE_LEAVE_ROOM = 0x04;
-var OPCODE_CURSOR = 0x05;
-var OPCODE_CLICK = 0x06;
-var OPCODE_NICK = 0x07;
-var OPCODE_COLOR = 0x08;
-var OPCODE_DISPATCH = 0x09;
+// Server -> Client
+const OPCODE_SC_PING = 0x00;
+const OPCODE_SC_PONG = 0x01;
+const OPCODE_CONFIG = 0xA0;
+const OPCODE_ENTERED_GAME = 0xA1;
+const OPCODE_INFO = 0xB0;
+const OPCODE_EVENTS = 0xA2;
 
-var FLAG_CURSOR = 0x00;
+// Client -> Server
+const DISPATCH_CHANGE_DIRECTORY = 0x01;
+const DISPATCH_LIST_DIRECTORY = 0x02;
 
-var EVENT_CURSOR_ADD = 0x00;
-var EVENT_CURSOR_DELETE = 0x01;
+// Server -> Client
+const FLAG_CURSOR = 0x11;
+const FLAG_DIRECTORY = 0x12;
+const FLAG_FILE = 0x13;
+
+const EVENT_CURSOR_ADD = 0x00;
+const EVENT_CURSOR_DELETE = 0x01;
+const EVENT_CHANGE_DIRECTORY = 0x02;
+
 
 window.Cursor = class Cursor {
   constructor(maybeShow) {
@@ -232,6 +243,18 @@ window.Network = class Network {
     for (let i = 0; i < nick.length; i++) {
       view.setUint16(1 + i * 2, nick.charCodeAt(i), true);
     }
+
+    this.webSocket.send(buffer);
+  }
+
+  changeDirectory(directoryId) {
+    let buffer = new ArrayBuffer(1+1+4);
+    let view = new DataView(buffer);
+
+    view.setUint8(0, OPCODE_DISPATCH);
+    view.setUint8(1, DISPATCH_CHANGE_DIRECTORY);
+
+    view.setUint32(2, directoryId);
 
     this.webSocket.send(buffer);
   }
