@@ -88,7 +88,7 @@ const FLAG_FILE = 0x13;
 const EVENT_CURSOR_ADD = 0x00;
 const EVENT_CURSOR_DELETE = 0x01;
 const EVENT_CHANGE_DIRECTORY = 0x02;
-const EVEMT_ENTER_DIRECTORY = 0x03;
+const EVENT_ENTER_DIRECTORY = 0x03;
 
 
 window.Cursor = class Cursor {
@@ -395,6 +395,16 @@ window.Network = class Network {
             if(debug) console.log('Cursor hide', cursor);
             if (cursor) {
               cursor.hide();
+            }
+            break;
+          }
+
+          case EVENT_ENTER_DIRECTORY:
+          {
+            let cursor = cursors.get(id);
+            if(debug) console.log('Cursor show', cursor);
+            if (cursor) {
+              cursor.show();
             }
             break;
           }
