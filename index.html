@@ -22,5 +22,11 @@
   </div>
   <div id="cursor-place"></div>
   <canvas id="canvas"></canvas>
+  <div id="overlay">
+    <div id="nickInput">
+      <input id="nick" maxlength="15" placeholder="nickname" type="text" onkeydown="if(event.keyCode == 13) document.getElementById('playButton').click()" />
+      <button id="playButton">PLAY</button>
+    </div>
+  </div>
 </body>
 </html>
