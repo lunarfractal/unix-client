@@ -73,6 +73,10 @@ function getString(view, offset) {
   };
 }
 
+function clickedPlay(str) {
+  window.network.sendNick(str);
+}
+
 var cursors = new Map();
 
 var myId;
@@ -317,6 +321,8 @@ window.Network = class Network {
       case OPCODE_ENTERED_ROOM:
         console.log("Did enter room!");
         window.myId = view.getUint32(1, true);
+        fadeOutOverlay();
+        fadeInAppNow();
         console.log(myId);
         break;
       case OPCODE_CONFIG:
