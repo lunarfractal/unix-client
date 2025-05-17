@@ -346,8 +346,7 @@ window.Network = class Network {
     let offset = 1;
     let type = view.getUint8(offset);
     offset++;
-    if (type == FLAG_CURSOR) {
-      while (true) {
+    while (true) {
         let id = view.getUint32(offset, true);
         offset += 4;
         if (id == 0x00) break;
