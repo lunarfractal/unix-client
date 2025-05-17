@@ -13,11 +13,29 @@ function resizeCanvas() {
   canvas.height = document.documentElement.clientHeight;
 }
 
-function hideUI() {
+function hideOverlay() {
+  $("#overlay").hide();
+}
+
+function fadeOutOverlay() {
+  $("#overlay").fadeOut(300);
+}
+
+function fadeInOverlay() {
+  setTimeout(() => {
+    $("#overlay").fadeIn(300);
+  }, 1000);
+}
+
+function hideApp() {
   $(".app").hide();
 }
 
-function fadeInUI() {
+function fadeInAppNow() {
+  $(".app").fadeIn(300);
+}
+
+function fadeInApp() {
   setTimeout(() => {
     $(".app").fadeIn(300);
   }, 1000);
@@ -295,7 +313,6 @@ window.Network = class Network {
         break;
       case OPCODE_SC_PONG:
         console.log("Pong", +new Date() - this.lastPing);
-        window.network.sendNick("hi");
         break;
       case OPCODE_ENTERED_ROOM:
         console.log("Did enter room!");
