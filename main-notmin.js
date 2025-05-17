@@ -100,15 +100,20 @@ window.Cursor = class Cursor {
   constructor(maybeShow) {
     this.element = document.createElement("div");
     this.element.className = "cursor";
-    this.initElement();
-    if(!maybeShow)
-      document.getElementById("cursor-place").appendChild(this.element);
-  }
 
-  initElement() {
-    let img = document.createElement("img");
-    img.src = "http://brutal.nekoweb.org/cursor.png";
-    this.element.appendChild(img);
+    // Create elements
+    this.img = document.createElement("img");
+    this.img.src = "http://brutal.nekoweb.org/cursor.png";
+    this.label = document.createElement("span");
+    this.label.className = "cursor-label";
+    
+    // Build structure
+    this.element.appendChild(this.img);
+    this.element.appendChild(this.label);
+
+    if (!maybeShow) {
+      document.getElementById("cursor-place").appendChild(this.element);
+    }
   }
 
   hide() {
@@ -118,7 +123,7 @@ window.Cursor = class Cursor {
   show() {
     this.element.style.display = 'block';
   }
-  
+
   delete() {
     document.getElementById("cursor-place").removeChild(this.element);
   }
@@ -128,10 +133,15 @@ window.Cursor = class Cursor {
     this.element.style.marginTop = y + "px";
   }
 
-  updateNick(nick) {}
+  updateNick(nick) {
+    this.label.textContent = nick;
+  }
 
-  updateColor(r, g, b) {}
+  updateColor(r, g, b) {
+    this.label.style.color = `rgb(${r}, ${g}, ${b})`;
+  }
 };
+
 
 window.Network = class Network {
   constructor() {
