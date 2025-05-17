@@ -18,7 +18,10 @@
 </head>
 <body>
   <div class="app">
-
+    <div id="chatbox"></div>
+    <div id="chatInput">
+        <input id="chat" placeholder="message /home" maxlength="15" type="text" onkeydown="if(event.keyCode == 13) window.sendMessage()" />
+    </div>
   </div>
   <div id="cursor-place"></div>
   <canvas id="canvas"></canvas>
