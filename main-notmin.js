@@ -3,6 +3,11 @@ var ctx;
 
 var debug = true;
 
+function resize() {
+  network.sendDimensions();
+  resizeCanvas();
+}
+
 function resizeCanvas() {
   canvas.width = document.documentElement.clientWidth;
   canvas.height = document.documentElement.clientHeight;
@@ -173,7 +178,7 @@ window.Network = class Network {
 
   hello() {
     this.ping();
-    this.sendScreen();
+    this.sendDimensions();
   }
 
   ping() {
@@ -195,7 +200,7 @@ window.Network = class Network {
     this.webSocket.send(buffer);
   }
 
-  sendScreen() {
+  sendDimensions() {
     let buffer = new ArrayBuffer(5);
     let view = new DataView(buffer);
 
@@ -448,4 +453,4 @@ window.Network = class Network {
 };
 
 window.onload = init;
-window.onresize = resizeCanvas;
+window.onresize = resize;
